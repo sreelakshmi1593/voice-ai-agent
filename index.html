@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice AI Agent - Clinical Appointment System</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 600px;
+            max-width: 95%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 14px;
+        }
+
+        .patient-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .patient-section input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .patient-section input:focus {
+            border-color: #667eea;
+        }
+
+        .chat-box {
+            height: 350px;
+            overflow-y: auto;
+            border: 2px solid #f0f0f0;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.user {
+            align-items: flex-end;
+        }
+
+        .message.agent {
+            align-items: flex-start;
+        }
+
+        .bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .user .bubble {
+            background: #667eea;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .agent .bubble {
+            background: #f0f0f0;
+            color: #333;
+            border-bottom-left-radius: 4px;
+        }
+
+        .meta {
+            font-size: 11px;
+            color: #aaa;
+            margin-top: 4px;
+        }
+
+        .input-section {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .input-section input {
+            flex: 1;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .input-section input:focus {
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-send {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-send:hover {
+            background: #5a6fd6;
+        }
+
+        .btn-voice {
+            background: #ff6b6b;
+            color: white;
+            width: 100%;
+            padding: 15px;
+            font-size: 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .btn-voice:hover {
+            background: #ff5252;
+        }
+
+        .btn-voice.recording {
+            background: #ff0000;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4caf50;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .latency {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .lang-badge {
+            padding: 3px 10px;
+            border-radius: 20px;
+            background: #667eea;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .quick-btns {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .quick-btn {
+            padding: 6px 12px;
+            background: #f0f0ff;
+            color: #667eea;
+            border: 1px solid #667eea;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 Clinical Appointment Assistant</h1>
+            <p>Book, reschedule or cancel appointments using voice or text</p>
+        </div>
+
+        <!-- Patient ID -->
+        <div class="patient-section">
+            <input type="text" id="patientId" 
+                   placeholder="Enter Patient ID (e.g. patient_001)" 
+                   value="patient_001" />
+        </div>
+
+        <!-- Chat Box -->
+        <div class="chat-box" id="chatBox">
+            <div class="message agent">
+                <div class="bubble">
+                    👋 Hello! I'm your clinical appointment assistant. 
+                    I can help you book, reschedule, or cancel appointments. 
+                    How can I help you today?
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Suggestion Buttons -->
+        <div class="quick-btns">
+            <button class="quick-btn" 
+                onclick="sendQuick('Book appointment with cardiologist tomorrow')">
+                📅 Book Appointment
+            </button>
+            <button class="quick-btn" 
+                onclick="sendQuick('Check available slots for dermatologist tomorrow')">
+                🔍 Check Slots
+            </button>
+            <button class="quick-btn" 
+                onclick="sendQuick('मुझे कल डॉक्टर से मिलना है')">
+                🇮🇳 Hindi
+            </button>
+            <button class="quick-btn" 
+                onclick="sendQuick('நாளை மருத்துவரை பார்க்க வேண்டும் (Tamil: Book doctor tomorrow)')">
+                🌟 Tamil
+            </button>
+        </div>
+
+        <!-- Text Input -->
+        <div class="input-section">
+            <input type="text" id="userInput" 
+                   placeholder="Type your message here..." 
+                   onkeypress="handleKeyPress(event)" />
+            <button class="btn btn-send" onclick="sendMessage()">Send</button>
+        </div>
+
+        <!-- Voice Button -->
+        <button class="btn btn-voice" id="voiceBtn" onclick="startVoiceRecording()">
+            🎤 Click to Speak
+        </button>
+
+        <!-- Status Bar -->
+        <div class="status-bar">
+            <span><span class="status-dot"></span>Connected</span>
+            <span class="latency" id="latencyDisplay">Latency: -- ms</span>
+            <span class="lang-badge" id="langDisplay">English</span>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "http://localhost:8000";
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+
+        // WebSocket connection
+        let ws = null;
+
+        function connectWebSocket() {
+            const patientId = document.getElementById('patientId').value;
+            ws = new WebSocket(`ws://localhost:8000/ws/${patientId}`);
+
+            ws.onopen = () => {
+                console.log('WebSocket connected');
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                addMessage('agent', data.response, data.latency_ms, data.language);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket disconnected');
+                setTimeout(connectWebSocket, 2000);
+            };
+        }
+
+        connectWebSocket();
+
+        function addMessage(role, text, latency, language) {
+            const chatBox = document.getElementById('chatBox');
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+
+            let meta = '';
+            if (latency) {
+                meta = `<div class="meta">⏱️ ${latency.toFixed(0)} ms</div>`;
+                document.getElementById('latencyDisplay').textContent = 
+                    `Latency: ${latency.toFixed(0)} ms`;
+            }
+
+            if (language) {
+                const langMap = {
+                    'english': 'English',
+                    'hindi': 'Hindi',
+                    'tamil': 'Tamil'
+                };
+                document.getElementById('langDisplay').textContent = 
+                    langMap[language] || 'English';
+            }
+
+            div.innerHTML = `<div class="bubble">${text}</div>${meta}`;
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('userInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            addMessage('user', text);
+            input.value = '';
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({ message: text }));
+            } else {
+                // Fallback to REST API
+                fetch(`${API_URL}/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: text,
+                        patient_id: document.getElementById('patientId').value
+                    })
+                })
+                .then(r => r.json())
+                .then(data => {
+                    addMessage('agent', data.response, data.latency_ms, data.language);
+                });
+            }
+        }
+
+        function sendQuick(text) {
+            document.getElementById('userInput').value = text;
+            sendMessage();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter') sendMessage();
+        }
+
+        async function startVoiceRecording() {
+            if (isRecording) {
+                stopVoiceRecording();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    await sendVoiceToServer(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+
+                const btn = document.getElementById('voiceBtn');
+                btn.textContent = '⏹️ Recording... Click to Stop';
+                btn.classList.add('recording');
+
+            } catch (err) {
+                alert('Microphone access denied. Please allow microphone access.');
+            }
+        }
+
+        function stopVoiceRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+
+                const btn = document.getElementById('voiceBtn');
+                btn.textContent = '🎤 Click to Speak';
+                btn.classList.remove('recording');
+            }
+        }
+
+        async function sendVoiceToServer(audioBlob) {
+            addMessage('user', '🎤 [Voice message sent...]');
+
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.wav');
+            formData.append('patient_id', 
+                document.getElementById('patientId').value);
+
+            try {
+                const response = await fetch(`${API_URL}/voice`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.recognized_text) {
+                    const lastMsg = document.querySelector(
+                        '.message.user:last-child .bubble'
+                    );
+                    if (lastMsg) {
+                        lastMsg.textContent = `🎤 "${data.recognized_text}"`;
+                    }
+                }
+
+                addMessage('agent', data.response, data.latency_ms, data.language);
+
+            } catch (err) {
+                addMessage('agent', 
+                    'Sorry, could not process voice. Please try text input.');
+            }
+        }
+    </script>
+</body>
+</html>
