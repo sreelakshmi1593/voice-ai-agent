@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+groq
+SpeechRecognition
+gTTS
+sqlalchemy
+python-dotenv
+websockets
+langdetect
+python-multipart
